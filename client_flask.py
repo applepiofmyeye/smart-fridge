@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 class FruitClassifierClient:
-    def __init__(self, server_url="http://192.168.1.59:5000"):
+    def __init__(self, server_url="http://192.168.94.230:5000"):
         """
         Initialize the client with the server URL
         
