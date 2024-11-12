@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 class FruitClassifierClient:
-    def __init__(self, server_url="http://192.168.94.230:5000"):
+    def __init__(self, server_url="http://172.25.107.207:5000"):
         """
         Initialize the client with the server URL
         
@@ -11,7 +11,7 @@ class FruitClassifierClient:
             server_url (str): The base URL of the Flask server
         """
         self.server_url = server_url
-        self.upload_endpoint = f"{server_url}/upload"
+        self.upload_endpoint = f"{server_url}/upload-image"
 
     def process_image(self, image_path):
         """

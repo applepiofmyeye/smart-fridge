@@ -11,13 +11,10 @@ load_dotenv()  # This line brings all environment variables from .env into os.en
 
 app = Flask(__name__)
 
-classes = ["fresh apple", "rotten apple", "fresh banana", "rotten banana", "fresh cucumber", "rotten cucumber", "fresh orange", "rotten orange", "fresh potato", "rotten potato", "fresh tomato", "rotten tomato"]
+classes = ["Red Apple", "Rotten Red Apple", "Green Apple", "Rotten Green Apple", "Cucumber", "Rotten Cucumber", "Banana", "Rotten Banana"]
 
 
-fruits = ["Apple", "Banana", "Cucumber", "Orange", "Potato", "Tomato"]
-
-
-
+fruits = ["Red Apple", "Green Apple", "Cucumber", "Banana"]
 
 # Check ultralytics version
 try:
@@ -56,21 +53,41 @@ except Exception as e:
 # Ensure uploads directory exists
 os.makedirs('uploads', exist_ok=True)
 
-@app.route('/upload', methods=['POST'])
+@app.route('/upload-image', methods=['POST'])
 def upload_image():
     print("Uploading image...")
-    if 'file' not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
     
     try:
+        print("entered try block")
+        # Save the image temporarily
+        image_name = str(uuid.uuid4()) + ".jpg"
+    
+        # Save the image temporarily
+        ## file_path = os.path.join('uploads', image_name)
+        ## file.save(file_path)
+        
+        # image_raw_bytes = request.get_data()  #get the whole body
+        # file_path = (os.path.join(app.root_path, image_name)) #save to the same folder as the flask app live in 
+
+        # f = open(file_path, 'wb') # wb for write byte data in the file instead of string
+        # f.write(image_raw_bytes) #write the bytes from the request body to the file
+        # f.close()
+
+        # print("Image saved")    
+        if 'file' not in request.files:
+            return jsonify({"error": "No file uploaded"}), 400
+    
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+
+        print("try to save temp")
         # Save the image temporarily
         image_name = str(uuid.uuid4()) + ".jpg"
         file_path = os.path.join('uploads', image_name)
         file.save(file_path)
+
+        print("try to run yolo")
         
         # Run YOLO prediction
         results = model(file_path)
@@ -94,15 +111,17 @@ def upload_image():
 
                 # Get the fruit and its condition (fresh/rotten)
                 class_name = classes[cls]
-                condition, fruit = class_name.split()  # e.g., "fresh apple" -> "fresh", "apple"
+                condition, fruit = class_name.split(1)  # e.g., "fresh apple" -> "fresh", "apple"
                 fruit = fruit.capitalize()
 
                 print(condition)
                 # Update counts based on condition
-                if condition == "fresh":
+                if condition == "Fresh":
                     fruit_counts[fruit]["Quantity"] += 1  # Count only fresh fruits for "Quantity"
 
                 fruit_counts[fruit]["Total"] += 1  # Count both fresh and rotten for "Total"
+
+        print("try to update firestore")
 
         # Update Firestore with the counts
         for fruit, counts in fruit_counts.items():
@@ -117,20 +136,11 @@ def upload_image():
                     "Quantity": counts["Quantity"],
                     "Total": counts["Total"]
                 })
-        
-        # Update Firestore if needed
-        #if processed_results:
-            # Update the count in Firestore
-            # TODO: count the quantity of each with each class and keep track. then add to db
-            
 
-
-        #doc_ref = db.collection("fruits").document(classes[cls])    
-        #doc_ref.set({"quantity": })
-        
+        print("firestore updated, return success")
         # Clean up
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        # if os.path.exists(file_path):
+        #     os.remove(file_path)
         
         return jsonify({
             'success': True,
@@ -139,8 +149,8 @@ def upload_image():
         
     except Exception as e:
         # Clean up on error
-        if 'file_path' in locals() and os.path.exists(file_path):
-            os.remove(file_path)
+        # if 'file_path' in locals() and os.path.exists(file_path):
+            # os.remove(file_path)
         
         print(f"Error processing image: {str(e)}")
         return jsonify({
