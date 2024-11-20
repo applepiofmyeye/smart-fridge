@@ -54,11 +54,11 @@ def on_message(client, userdata, message):
         if message.topic == "message/temp" and "Temperature:" in string_arr:
             index = string_arr.index("Temperature:")
             temp_str = string_arr[index + 1].rstrip("°C")  
-            curr_temp = int(float(temp_str))  # Convert to float, then to int
+            curr_temp = float(temp_str)  # Convert to float, then to int
             print("Updated Temperature: " + str(curr_temp))
         elif message.topic == "message/humidity" and "Humidity:" in string_arr:
             index = string_arr.index("Humidity:")
-            curr_humidity = int(float(string_arr[index + 1][:-1]))
+            curr_humidity = float(string_arr[index + 1][:-1])
             print("Updated Humidity: " + str(curr_humidity))
     except Exception as e:
         print(f"Error processing message: {str(e)}")

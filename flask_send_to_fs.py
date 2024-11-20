@@ -58,36 +58,24 @@ def upload_image():
     print("Uploading image...")
     
     try:
-        print("entered try block")
         # Save the image temporarily
         image_name = str(uuid.uuid4()) + ".jpg"
-    
-        # Save the image temporarily
-        ## file_path = os.path.join('uploads', image_name)
-        ## file.save(file_path)
-        
-        # image_raw_bytes = request.get_data()  #get the whole body
-        # file_path = (os.path.join(app.root_path, image_name)) #save to the same folder as the flask app live in 
-
-        # f = open(file_path, 'wb') # wb for write byte data in the file instead of string
-        # f.write(image_raw_bytes) #write the bytes from the request body to the file
-        # f.close()
 
         # print("Image saved")    
         if 'file' not in request.files:
+            print("no file uploaded")
             return jsonify({"error": "No file uploaded"}), 400
     
         file = request.files['file']
         if file.filename == '':
+            print("no selected file")
+
             return jsonify({"error": "No selected file"}), 400
 
-        print("try to save temp")
         # Save the image temporarily
         image_name = str(uuid.uuid4()) + ".jpg"
         file_path = os.path.join('uploads', image_name)
         file.save(file_path)
-
-        print("try to run yolo")
         
         # Run YOLO prediction
         results = model(file_path)
@@ -102,7 +90,7 @@ def upload_image():
                 b = box.xyxy[0].tolist()  # get box coordinates in (top, left, bottom, right) format
                 conf = float(box.conf[0])
                 cls = int(box.cls[0])
-                
+
                 processed_results.append({
                     'bbox': b,
                     'confidence': conf,
@@ -110,11 +98,14 @@ def upload_image():
                 })
 
                 # Get the fruit and its condition (fresh/rotten)
-                class_name = classes[cls]
-                condition, fruit = class_name.split(1)  # e.g., "fresh apple" -> "fresh", "apple"
-                fruit = fruit.capitalize()
+                class_name = classes[cls]  # Retrieve class name as a string
+                if "Rotten" in class_name:
+                    condition = "Rotten"
+                    fruit = class_name.replace("Rotten ", "").title()  # Ensures 'Green apple' is always 'Green Apple'  
+                else:
+                    condition = "Fresh"
+                    fruit = class_name.title()
 
-                print(condition)
                 # Update counts based on condition
                 if condition == "Fresh":
                     fruit_counts[fruit]["Quantity"] += 1  # Count only fresh fruits for "Quantity"
@@ -129,7 +120,9 @@ def upload_image():
             print(fruit, counts)
             col_ref = db.collection(u'fridge')
             doc_refs_generator = col_ref.where("Item", "==", fruit).stream()
+            found = False
             for doc_ref in doc_refs_generator:
+                found = True
                 doc = col_ref.document(doc_ref.id)
                 doc.set({
                     "Item": fruit,
@@ -137,15 +130,23 @@ def upload_image():
                     "Total": counts["Total"]
                 })
 
-        print("firestore updated, return success")
-        # Clean up
-        # if os.path.exists(file_path):
-        #     os.remove(file_path)
-        
-        return jsonify({
-            'success': True,
-            'predictions': processed_results
-        }), 200
+        if not found:
+            # Handle creating a new document if none exists
+            col_ref.add({
+                "Item": fruit,
+                "Quantity": counts["Quantity"],
+                "Total": counts["Total"]
+            })
+
+            print("firestore updated, return success")
+            # Clean up
+            # if os.path.exists(file_path):
+            #     os.remove(file_path)
+            
+            return jsonify({
+                'success': True,
+                'predictions': processed_results
+            }), 200
         
     except Exception as e:
         # Clean up on error
@@ -160,4 +161,4 @@ def upload_image():
 
 if __name__ == '__main__':
     print("Server starting...")
-    app.run(debug=True, host='192.168.94.46')
+    app.run(debug=True, host='172.25.109.166')

@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 class FruitClassifierClient:
-    def __init__(self, server_url="http://172.25.107.207:5000"):
+    def __init__(self, server_url="http://172.25.109.166:5000"):
         """
         Initialize the client with the server URL
         
@@ -51,7 +51,7 @@ def main():
     # Initialize client
     client = FruitClassifierClient()
 
-    classes = ["fresh apple", "rotten apple", "fresh banana", "rotten banana", "fresh cucumber", "rotten cucumber", "fresh orange", "rotten orange", "fresh potato", "rotten potato", "fresh tomato", "rotten tomato"]
+    classes = ["Red Apple", "Rotten Red Apple", "Green Apple", "Rotten Green Apple", "Cucumber", "Rotten Cucumber", "Banana", "Rotten Banana"]
     
     # Example folder containing images
     image_folder = "test_images"
@@ -60,7 +60,7 @@ def main():
     # Process all jpg/jpeg images in the folder
         if os.path.exists(image_folder):
             for image_file in os.listdir(image_folder):
-                if image_file.lower().endswith(('.png', '.jpeg')):
+                if image_file.lower().endswith(('.png', '.jpg')):
                     image_path = os.path.join(image_folder, image_file)
                     print(f"\nProcessing {image_file}...")
                     
