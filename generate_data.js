@@ -7,8 +7,8 @@ const data = [];
 
 for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
   data.push({
-    Banana: getRandomInt(0, 4),
-    Cucumber: getRandomInt(0, 2),
+    Banana: getRandomInt(3, 4),
+    Cucumber: 2,
     'Green Apple': getRandomInt(0, 2),
     'Red Apple': getRandomInt(0, 4),
     Date: d.toISOString()
